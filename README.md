@@ -1,125 +1,77 @@
-# Noseek Harness
+# DeepSeek Harness
 
-A clean, whitelabeled, zero-telemetry, and vendor-neutral agent harness.
+English | [中文](README.zh.md)
 
-> **Project Goal:** Noseek Harness creates a 100% unbranded, private, and vendor-neutral open-source distribution of the harness — serving the same role to DeepSeek Harness that **Chromium** serves to Google Chrome.
+DeepSeek Harness (`dsh`) is an open-source agent harness developed by [DeepSeek AI](https://deepseek.com).
 
-For the full architectural deep dive, telemetry audit, plugin feasibility analysis, and phased implementation roadmap, see [**`WHITELABEL_PLAN.md`**](WHITELABEL_PLAN.md).
+It is built on an **everything-is-a-plugin** architecture and powered by [Cordis](https://github.com/cordiverse/cordis), whose design is described in [_A Programming Paradigm for Spatiotemporal Composability_](https://arxiv.org/abs/2608.25512).
 
----
+Documentation: [https://deepseek-harness.github.io/deepseek-harness/](https://deepseek-harness.github.io/deepseek-harness/)
 
-## Key Principles
+## Developer preview
 
-- **Zero Telemetry & Exfiltration:** Eliminates all background tracking, OpenTelemetry collectors, product analytics, silent session transcript uploads (`dsh_session_log`), plugin inventory exfiltration (`dsh_plugin_packages`), and per-request user/session tracking headers (`x-deepseek-harness-*`).
-- **Zero China Outbound Calls:** Completely cuts off communication with Chinese infrastructure (`deepseek.com`, `deepseeksvc.com`, `feishu.cn`, and Tencent Cloud COS).
-- **Vendor-Neutral & BYOK:** Unlocks the harness for first-class local models (Ollama, vLLM, llama.cpp) and BYOK (Bring Your Own Key) providers (OpenAI, Anthropic, OpenRouter) using secure local keychain storage.
-- **Unbranded UI & Neutral Slots:** Replaces all proprietary logos, wordmarks, and hardcoded fish art with clean, customizable, and whitelabeled assets.
-- **Microkernel Architecture:** Built on [Cordis](https://github.com/cordiverse/cordis) with an "everything-is-a-plugin" design.
+DeepSeek Harness is in _developer preview_ and iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
 
-> **Privacy boundary:** Noseek guarantees zero egress to DeepSeek and Chinese infrastructure. Any LLM provider the user configures (OpenAI, Anthropic, OpenRouter) will still receive prompts and code as part of normal operation. For full air-gapped privacy, use local models.
+Review the [safety notice](SAFETY.md) before running the project.
 
----
+## Run
 
-## Quickstart
+### Run from `npm`
 
-### Prerequisites
-
-- **Node.js:** `^22.19.0 || >=24.0.0`
-- **Package Manager:** `pnpm@11.7.0` (managed via `corepack enable` or installed globally)
+Install `Node.js`, then run:
 
 ```sh
-git clone git@github.com:philipcamacho/noseek-harness.git
-cd noseek-harness
-pnpm install
-pnpm run build
+npx @deepseek-ai/dsh web
 ```
 
----
+The command starts the Web UI at `http://127.0.0.1:3080` by default and opens it in the default browser for a local launch. An SSH launch only prints the host URL because the SSH client or editor owns the local forwarded address. Pass `--no-open` to run the server without opening a browser. See [Web UI guide](docs/user/guide/index.md).
 
-### Running the Web UI
+### Run from source
 
-Launch the Web UI on `http://127.0.0.1:3080`:
+To run from a repository checkout:
 
 ```sh
+git clone https://github.com/deepseek-ai/deepseek-harness.git
+cd deepseek-harness
+pnpm install
+pnpm run build
 pnpm dsh web
 ```
 
-For live development with hot-module reloading (HMR) for client plugins:
+`pnpm run build` prepares the repository artifacts. `pnpm dsh web` uses those built artifacts without rebuilding.
 
-```sh
-pnpm run dev:web
+## Community and support
+
+- Submit feedback or bug reports through [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions).
+- Add the [`dsh-plugin`](https://github.com/topics/dsh-plugin) topic to your plugin repository for discoverability.
+- Join <a href="https://discord.gg/4MrtZUhpxg">DeepSeek Harness Discord community</a>.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Development
+
+Start with the [development guide](docs/development.md) and [architecture documentation](docs/architecture.md).
+
+`pnpm run dev:web` builds, serves, and rebuilds client bundles on source edits in one terminal, and `make help` lists the matching Make targets for Web and Desktop; the guide's application commands section owns the full table.
+
+For agents, follow [AGENTS.md](AGENTS.md).
+
+## Citation
+
+```bibtex
+@misc{deepseek-harness2026,
+  title={DeepSeek Harness: Everything is a Plugin},
+  author={DeepSeek-AI},
+  year={2026},
+  publisher={GitHub},
+  howpublished={\url{https://github.com/deepseek-ai/deepseek-harness}},
+}
 ```
 
----
+## License
 
-### Running & Building the Desktop App (Electron)
+[MIT](LICENSE)
 
-The Desktop application wraps the harness in an Electron shell with local native directory pickers, background execution, and system tray support.
-
-#### 1. Development & Local Launch
-
-To compile the native libraries, assemble the desktop runtime bundle, and launch the Electron application:
-
-```sh
-pnpm run dev:desktop
-```
-
-If the packages are already built and you want to launch the desktop shell immediately without rebuilding:
-
-```sh
-pnpm run start:desktop
-```
-
-#### 2. Packaging Standalone Desktop Binaries
-
-To produce standalone release executables / installers:
-
-* **Package for your current operating system:**
-  ```sh
-  pnpm run package:desktop
-  ```
-
-* **Package unpacked directory only (fast verification without creating installers):**
-  ```sh
-  pnpm run package:desktop:dir
-  ```
-
-* **Platform-specific targets:**
-  * **macOS (Apple Silicon / ARM64):**
-    ```sh
-    pnpm run package:desktop:mac:arm64
-    # Or unpacked app bundle:
-    pnpm run package:desktop:mac:arm64:dir
-    ```
-  * **macOS (Intel / x64):**
-    ```sh
-    pnpm run package:desktop:mac:x64
-    # Or unpacked app bundle:
-    pnpm run package:desktop:mac:x64:dir
-    ```
-  * **Windows (x64):**
-    ```sh
-    # Unsigned executable:
-    pnpm run package:desktop:win:x64:unsigned
-    # Or unpacked directory:
-    pnpm run package:desktop:win:x64:dir
-    ```
-
-Packaged installers and `.app` / `.exe` bundles are generated in `apps/desktop/.desktop-build/targets/<target>/dist/`.
-
----
-
-## Documentation & Architecture
-
-- [**Whitelabel & Telemetry Elimination Plan**](WHITELABEL_PLAN.md) — Comprehensive inventory of endpoints, branding, plugin feasibility, upstream sync strategy, and phased roadmap.
-- [**Agent Guidelines**](AGENTS.md) — Architectural rules, coding standards, and standing orders for AI assistants and contributors.
-- [**Desktop Shell Documentation**](apps/desktop/README.md) — Deep dive into the Electron lifecycle, embedded runtime, and packaging pipeline.
-- [**Development Guide**](docs/development.md) — Full repository tooling, scripts, and build workflows.
-- [**Architecture Overview**](docs/architecture.md) — Cordis plugin composition, host runner, and client layer.
-- [**Safety Notice**](SAFETY.md) — Execution bounds and sandbox permissions.
-
----
-
-## Upstream & Acknowledgements
-
-Noseek Harness is an independent, community-driven distribution downstream from [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`), powered by [Cordis](https://github.com/cordiverse/cordis).
+Third-party dependencies and their licenses are disclosed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

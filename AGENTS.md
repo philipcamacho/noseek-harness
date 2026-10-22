@@ -1,6 +1,6 @@
 # AGENTS.md
 
-> **Noseek Whitelabel Project:** This repository is downstream of DeepSeek Harness with the goal of creating a 100% whitelabeled, telemetry-free, zero-China-egress agent harness (the "Chromium" of DeepSeek Harness). All agents working on this repository MUST consult [WHITELABEL_PLAN.md](WHITELABEL_PLAN.md) before implementing changes to understand architectural boundaries, privacy gates, brand asset replacement, and upstream sync strategy.
+> **Noseek fork:** read [noseek/AGENTS.md](noseek/AGENTS.md) first; upstream merges follow [noseek-upstream-sync](.agents/skills/noseek-upstream-sync/SKILL.md).
 
 DeepSeek Harness is an all-plugin Cordis agent harness. Read [docs/architecture.md](docs/architecture.md) before changing `packages/`; follow [docs/AGENTS.md](docs/AGENTS.md) for documentation.
 
