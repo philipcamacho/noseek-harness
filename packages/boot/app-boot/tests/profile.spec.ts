@@ -195,16 +195,18 @@ it('composes current files from profile data and retains launch overlay and tele
   }
   expect(composeEntries([readProfilePatches('test', context)])[0]?.disabled).toBe(true)
   const enabled = { ...context, telemetryDisabledEnv: undefined }
-  expect(composeEntries([readProfilePatches('test', enabled)])[0]?.disabled).toBe(false)
+  // In Noseek, quarantined rows like session-telemetry-otel remain disabled: true by the quarantine layer.
+  expect(composeEntries([readProfilePatches('test', enabled)])[0]?.disabled).toBe(true)
   const patches = readProfilePatches('test', enabled)
-  patches.at(-1)!.disabled = true
+  expect(patches.at(-1)).toEqual({ id: 'session-telemetry-otel', disabled: true })
+  patches.at(-2)!.disabled = true
   expect(context.overlays[0]?.disabled).toBe(false)
   writeFileSync(join(home, PROFILE_PATCH_FILENAME), '- id: session-telemetry-otel\n  disabled: true\n')
   expect(composeEntries([readProfilePatches('test', { ...enabled, overlays: [] })])[0]?.disabled).toBe(true)
   writeFileSync(join(home, PROFILE_PATCH_FILENAME), '[]\n')
   expect(composeEntries([readProfilePatches('test', { ...enabled, overlays: [] })])[0]?.disabled).toBe(true)
   writeFileSync(patchPath, '- id: session-telemetry-otel\n  disabled: false\n')
-  expect(composeEntries([readProfilePatches('test', { ...enabled, overlays: [] })])[0]?.disabled).toBe(false)
+  expect(composeEntries([readProfilePatches('test', { ...enabled, overlays: [] })])[0]?.disabled).toBe(true)
 })
 
 describe('initProfile', () => {

@@ -35,7 +35,7 @@ import { EditorFooter } from './EditorFooter.tsx'
 import { ModelListEditor } from './ModelListEditor.tsx'
 import { validateReasoningEfforts } from './ModelReasoningEfforts.tsx'
 import type { ReasoningEffortsFailure } from './ModelReasoningEfforts.tsx'
-import { deriveKeyRef, protocolChoices, reasoningLevelChoices } from './store.ts'
+import { deriveKeyRef, isChinaHostedProvider, protocolChoices, reasoningLevelChoices } from './store.ts'
 import { protocolLabel } from './protocol-label.ts'
 import type { ModelsOperations } from './operations.ts'
 import type { SettingsSchemaOperations } from './schema-operations.ts'
@@ -415,6 +415,9 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
     }
     return (
       <>
+        {isChinaHostedProvider(props.provider, stringAt(fallback, 'baseURL') ?? props.defaultBaseURL) ? (
+          <p className={styles['notice']}>{t('chinaProviderNotice')}</p>
+        ) : null}
         {keylessNativeAuth
           ? null
           : <div className={styles['field']}>

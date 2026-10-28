@@ -18,7 +18,7 @@ import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import { AttachmentId } from '@deepseek-ai/dsh-attachment'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
-import LlmRuntime, { createAssistantMessage, createDeveloperMessage, createSystemMessage, createToolResultMessage, createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
+import LlmRuntime, { APP_IDENTITY, createAssistantMessage, createDeveloperMessage, createSystemMessage, createToolResultMessage, createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
 import type { Message } from '@deepseek-ai/dsh-llm'
 import { credentialRef } from '@deepseek-ai/dsh-credentials'
 import LocalCredentials from '@deepseek-ai/dsh-credentials-local'
@@ -136,7 +136,7 @@ describe('direct Messages HTTP', () => {
     })
     expect(http.requests[0]).toMatchObject({ path: '/anthropic/v1/messages', headers: {
       'x-api-key': 'test-key', 'anthropic-version': '2023-06-01',
-      'user-agent': expect.stringContaining('deepseek-harness/') as string, 'x-deepseek-harness-user-id': 'test-user',
+      'user-agent': expect.stringContaining('noseek-harness/') as string, 'x-deepseek-harness-user-id': 'test-user',
       'x-deepseek-harness-session-id': 'session-test', 'x-deepseek-harness-compact': '1',
     }, body: { thinking: { type: 'enabled' }, output_config: { effort: 'high' } } })
     expect(llm.providerInfo('deepseek-official')).toEqual({ id: 'deepseek-official', name: 'DeepSeek' })
@@ -403,7 +403,7 @@ describe('Cordis provider composition', () => {
       },
       {
         id: 'deepseek-v5', name: 'DeepSeek-V5', api_capabilities: { anthropic_messages: {} },
-        client_requirements: { 'deepseek-harness': { min_version: '99.0.0' } },
+        client_requirements: { [APP_IDENTITY.product]: { min_version: '99.0.0' }, 'deepseek-harness': { min_version: '99.0.0' } },
       },
     ] })
     ctx.provide('deepseekAccount', { resolveToken: async (_url: string): Promise<string | undefined> => 'fixture-token',

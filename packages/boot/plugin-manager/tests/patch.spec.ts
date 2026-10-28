@@ -160,3 +160,11 @@ it('keeps a switch whose value is an alias', async () => {
   expect(await writePluginEnabled(profile, 'tool', 'package', true)).toBe(true)
   expect(loadOptionalPatches('test', profile.patchPath)).toEqual([{ id: 'other', config: { flag: true } }, { id: 'tool', disabled: false }])
 })
+
+it('refuses to enable a quarantined plugin', async () => {
+  const profile = await fixture()
+  await expect(writePluginEnabled(profile, 'session-log-deepseek', 'package', true))
+    .rejects.toThrow(/quarantined plugin row "session-log-deepseek" cannot be enabled/)
+  await expect(writePluginEnabled(profile, 'session-log-deepseek', 'package', false))
+    .resolves.toBe(true)
+})

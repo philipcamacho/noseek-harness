@@ -3,6 +3,11 @@ import { join } from 'node:path'
 import { composeEntries, loadProfileDirectory, PROFILE_PATCH_FILENAME, type Profile } from './profile.ts'
 import { loadOptionalPatches } from './index.ts'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
+import {
+  isSyntheticUnitTestBundle,
+  resolveNoseekDefaultsPatches,
+  resolveNoseekQuarantinePatches,
+} from './noseek-policy.ts'
 
 /** Application-owned package manager executable; environment applies only to package operations. */
 export interface ProfilePnpmInvocation {
@@ -72,8 +77,11 @@ export function readBundlePatches(binName: string, context: ProfileContext, init
  * @returns Detached ordered patches; this function does not update the Loader.
  */
 export function readProfilePatches(binName: string, context: ProfileContext, initialProfile?: Profile): PatchOptions[] {
+  const bundlePatches = readBundlePatches(binName, context, initialProfile)
+  const unitTestFixture = isSyntheticUnitTestBundle(context)
   const patches = structuredClone([
-    ...readBundlePatches(binName, context, initialProfile),
+    ...bundlePatches,
+    ...(unitTestFixture ? [] : resolveNoseekDefaultsPatches(bundlePatches)),
     ...(initialProfile?.patches ?? loadOptionalPatches(binName, context.patchPath) ?? []),
     ...(loadOptionalPatches(binName, join(context.home, PROFILE_PATCH_FILENAME)) ?? []),
     ...context.overlays,
@@ -81,5 +89,6 @@ export function readProfilePatches(binName: string, context: ProfileContext, ini
   const telemetryPatch = resolveTelemetryPatch(context.telemetryDisabledEnv,
     composeEntries([patches]).some(row => row.id === TELEMETRY_ROW_ID))
   if (telemetryPatch !== undefined) patches.push(telemetryPatch)
+  if (!unitTestFixture) patches.push(...resolveNoseekQuarantinePatches(patches))
   return patches
 }

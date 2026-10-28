@@ -565,6 +565,7 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
           )
         })}
       </ul>
+      {configured.length === 0 ? <p className={styles['notice']}>{t('noProviderConfiguredNotice')}</p> : null}
       <div className={styles['addBlock']}>
         {addOpen
           ? (

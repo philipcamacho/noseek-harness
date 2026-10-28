@@ -426,6 +426,66 @@ describe('LlmRuntime', () => {
     expect(finish.reason.failure.message).toContain('no adapter registered')
   })
 
+  it('fails with a clear error naming deepseek via llm-pi-ai when requesting unregistered deepseek-official', async () => {
+    const ctx = new Context()
+    await ctx.plugin(LlmRuntime)
+
+    await expect(ctx.llm.prepareCall({
+      provider: 'deepseek-official',
+      model: 'deepseek-chat',
+    })).rejects.toMatchObject({
+      code: 'NO_ADAPTER',
+      message: 'no adapter registered for provider "deepseek-official"; use the "deepseek" provider via llm-pi-ai instead',
+    })
+
+    const chunks = await collect(ctx.llm.stream({
+      provider: 'deepseek-official',
+      model: 'deepseek-chat',
+      messages: [],
+    }))
+    const finish = chunks.at(-1)
+    expect(finish).toMatchObject({
+      type: 'finish',
+      reason: {
+        kind: 'error',
+        failure: {
+          code: 'NO_ADAPTER',
+          message: 'no adapter registered for provider "deepseek-official"; use the "deepseek" provider via llm-pi-ai instead',
+        },
+      },
+    })
+  })
+
+  it('fails with a clear error stating to configure a model provider when provider is empty', async () => {
+    const ctx = new Context()
+    await ctx.plugin(LlmRuntime)
+
+    await expect(ctx.llm.prepareCall({
+      provider: '',
+      model: 'any-model',
+    })).rejects.toMatchObject({
+      code: 'NO_ADAPTER',
+      message: 'no adapter registered for provider ""; configure a model provider before starting a turn',
+    })
+
+    const chunks = await collect(ctx.llm.stream({
+      provider: '',
+      model: 'any-model',
+      messages: [],
+    }))
+    const finish = chunks.at(-1)
+    expect(finish).toMatchObject({
+      type: 'finish',
+      reason: {
+        kind: 'error',
+        failure: {
+          code: 'NO_ADAPTER',
+          message: 'no adapter registered for provider ""; configure a model provider before starting a turn',
+        },
+      },
+    })
+  })
+
   it.each(['done', 'value'] as const)('normalizes a throwing IteratorResult.%s getter', async (field) => {
     const original = new LlmError(`${field} getter failed`, 'RESULT_GETTER_FAILED')
     const result = field === 'done' ? {} : { done: false }

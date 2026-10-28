@@ -17,6 +17,8 @@
     "website"
   ],
   "scripts": {
+    "audit:privacy": "tsx noseek/audit-privacy.ts",
+    "test:hermetic": "tsx noseek/hermetic-network-test.ts",
     "prepare:primary-runtime": "tsx scripts/primary-runtime/prepare.ts",
     "build": "tsx scripts/build.ts",
     "build:artifacts": "tsx scripts/build.ts --scope artifacts",

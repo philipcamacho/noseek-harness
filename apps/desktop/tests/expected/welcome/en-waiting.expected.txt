@@ -1,5 +1,5 @@
-DeepSeek Harness
-DeepSeek Harness
+Noseek Harness
+Noseek Harness
 Browser didn’t open automatically?
 Copy sign-in link
 Completing sign in… [disabled]

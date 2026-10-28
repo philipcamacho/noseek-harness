@@ -423,6 +423,17 @@ describe('Hero chrome', () => {
     expect(brandMarkOwner.className).toBeTypeOf('string')
     expect(renderSlot.mock.calls[0]?.[2]?.fallback).toBeTruthy()
   })
+
+  it('renders a neutral non-fish fallback mark without fish path', () => {
+    const renderSlot: HeroShellProps['renderSlot'] = (_key, _owner, options) => (options?.fallback ?? null) as ReactNode
+    const view = render(<HeroShell t={makeTranslate(en, commonEn)} renderSlot={renderSlot} />)
+    const svg = view.container.querySelector('svg')
+    expect(svg).toBeTruthy()
+    const path = svg?.querySelector('path')
+    expect(path).toBeTruthy()
+    const d = path?.getAttribute('d') ?? ''
+    expect(d).not.toContain('M22.9168')
+  })
 })
 
 describe('ConversationRoot resident composer', () => {

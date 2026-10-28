@@ -139,6 +139,8 @@ export const en = {
   onboardingSave: 'Save and continue',
   onboardingSaving: 'Saving…',
   keyRequired: 'Enter an API key to continue.',
+  chinaProviderNotice: 'This provider is operated in mainland China or by a Chinese company. Selecting it sends your prompts and code to its endpoint under its own jurisdiction and data policy.',
+  noProviderConfiguredNotice: 'No model provider is configured. Add a model provider below to start a conversation.',
 }
 
 /** The settings.models namespace key union. */
@@ -283,6 +285,8 @@ export const zh: { [Key in keyof typeof en]: string } = {
   onboardingSave: '保存并继续',
   onboardingSaving: '保存中…',
   keyRequired: '请输入 API 密钥后继续。',
+  chinaProviderNotice: '该提供商在中国大陆运营或由中国公司运营。选择该提供商会将您的提示词和代码按其所在司法管辖区及数据政策发送至其服务端点。',
+  noProviderConfiguredNotice: '尚未配置模型提供商。请在下方添加模型提供商以开始对话。',
 }
 
 /** Japanese copy, checked against the English keys. */
@@ -424,6 +428,8 @@ export const ja = {
   'onboardingSave': '保存して続ける',
   'onboardingSaving': '保存中…',
   'keyRequired': '続けるにはAPIキーを入力してください。',
+  'chinaProviderNotice': 'このプロバイダーは中国本土で運営されているか、中国企業によって運営されています。これを選択すると、プロンプトとコードがその管轄区域およびデータポリシーの下でそのエンドポイントに送信されます。',
+  'noProviderConfiguredNotice': 'モデルプロバイダーが設定されていません。会話を開始するには、以下からモデルプロバイダーを追加してください。',
 } satisfies Record<keyof typeof en, string>
 
 /** Spanish dictionary, checked against the English keys. */
@@ -565,6 +571,8 @@ export const es = {
   onboardingSave: 'Guardar y continuar',
   onboardingSaving: 'Guardando…',
   keyRequired: 'Ingrese una clave API para continuar.',
+  chinaProviderNotice: 'Este proveedor opera en China continental o es gestionado por una empresa china. Al seleccionarlo, sus instrucciones y código se enviarán a su punto de conexión bajo su propia jurisdicción y política de datos.',
+  noProviderConfiguredNotice: 'No hay ningún proveedor de modelos configurado. Añada un proveedor de modelos a continuación para iniciar una conversación.',
 } satisfies Record<keyof typeof en, string>
 
 /** French dictionary, checked against the English keys. */
@@ -706,6 +714,8 @@ export const fr = {
   onboardingSave: 'Enregistrer et continuer',
   onboardingSaving: 'Sauvegarde…',
   keyRequired: 'Entrez une clé API pour continuer.',
+  chinaProviderNotice: 'Ce fournisseur est exploité en Chine continentale ou par une entreprise chinoise. Le sélectionner envoie vos invites et votre code à son point de terminaison selon sa propre juridiction et politique de données.',
+  noProviderConfiguredNotice: 'Aucun fournisseur de modèles n\'est configuré. Ajoutez un fournisseur de modèles ci-dessous pour démarrer une conversation.',
 } satisfies Record<keyof typeof en, string>
 
 /** German dictionary, checked against the English keys. */
@@ -847,6 +857,8 @@ export const de = {
   onboardingSave: 'Speichern und fortfahren',
   onboardingSaving: 'Speichern…',
   keyRequired: 'Geben Sie einen API-Schlüssel ein, um fortzufahren.',
+  chinaProviderNotice: 'Dieser Anbieter wird in Festlandchina oder von einem chinesischen Unternehmen betrieben. Wenn Sie ihn auswählen, werden Ihre Prompts und Ihr Code unter dessen eigener Gerichtsbarkeit und Datenrichtlinie an dessen Endpunkt gesendet.',
+  noProviderConfiguredNotice: 'Es ist kein Modellanbieter konfiguriert. Fügen Sie unten einen Modellanbieter hinzu, um eine Konversation zu beginnen.',
 } satisfies Record<keyof typeof en, string>
 
 /** Russian dictionary, checked against the English keys. */
@@ -988,6 +1000,8 @@ export const ru = {
   onboardingSave: 'Сохранить и продолжить',
   onboardingSaving: 'Сохранение…',
   keyRequired: 'Введите ключ API, чтобы продолжить.',
+  chinaProviderNotice: 'Этот поставщик работает в материковом Китае или управляется китайской компанией. При его выборе ваши промпты и код отправляются на его конечную точку в соответствии с его юрисдикцией и политикой данных.',
+  noProviderConfiguredNotice: 'Поставщик моделей не настроен. Добавьте поставщика моделей ниже, чтобы начать разговор.',
 } satisfies Record<keyof typeof en, string>
 
 /** Portuguese dictionary, checked against the English keys. */
@@ -1129,4 +1143,6 @@ export const pt = {
   onboardingSave: 'Salvar e continuar',
   onboardingSaving: 'Salvando…',
   keyRequired: 'Insira uma chave de API para continuar.',
+  chinaProviderNotice: 'Este provedor é operado na China continental ou por uma empresa chinesa. Ao selecioná-lo, seus prompts e código serão enviados para o endpoint dele sob sua própria jurisdição e política de dados.',
+  noProviderConfiguredNotice: 'Nenhum provedor de modelos está configurado. Adicione um provedor de modelos abaixo para iniciar uma conversa.',
 } satisfies Record<keyof typeof en, string>

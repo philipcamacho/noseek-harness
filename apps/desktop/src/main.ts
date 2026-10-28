@@ -465,12 +465,13 @@ async function main(): Promise<void> {
   const platformView = new DesktopPlatformView(join(app.getAppPath(), 'lib', 'preload-platform-account.cjs'),
     () => locale.id === 'zh-CN' ? 'zh_CN' : 'en_US', process.platform === 'win32' ? 'win32' : 'darwin',
     owner => isMandatory() || updateOverlays.input(owner).blocked)
+  let isNoseekBuild = false
   const backend = new DesktopBackendController((onFailure) => {
     const hostInspectPort = developmentHostInspectPort(development)
     const host = new DesktopHostProcess(resources.node, resources.dsh, activeProject,
       hostInspectPort, { ...hostEnvironment, DSH_CLIENT_VERSION: desktopClientVersion() }, onFailure,
       primaryRuntime,
-      resources, (next) => { platformView.setSession(next) })
+      resources, (next) => { platformView.setSession(isNoseekBuild ? null : next) })
     return {
       start: async () => {
         const ready = await host.start()
@@ -613,6 +614,8 @@ async function main(): Promise<void> {
   }
 
   const manifest: unknown = JSON.parse(await readFile(join(app.getAppPath(), 'package.json'), 'utf8'))
+  isNoseekBuild = typeof manifest === 'object' && manifest !== null
+    && (!('dshDesktopAppId' in manifest) || manifest.dshDesktopAppId === 'com.noseek.harness')
   const updateChannel = desktopUpdateChannel(manifest)
   const updates = new DesktopUpdateCoordinator(
     publishUpdate,
@@ -766,6 +769,7 @@ async function main(): Promise<void> {
     catch { event.returnValue = null }
   })
   ipcMain.handle(PLATFORM_IPC.open, (event, page: unknown, bounds: unknown) => {
+    if (isNoseekBuild) throw new Error('Rejected Platform command')
     const owner = assertMainApplication(event)
     if (page !== 'usage' && page !== 'top-up') throw new Error('Invalid Platform page')
     return platformView.open(owner, page, platformBounds(bounds))
@@ -949,6 +953,7 @@ async function main(): Promise<void> {
   }
 
   const automaticCheck = (): void => {
+    if (isNoseekBuild) return
     if (!quitting) void mandatoryPolicy?.check('foreground-or-resume').catch((error: unknown) => { console.error(error) })
     if (!quitting) void updateSchedule.check().catch((error: unknown) => { console.error(error) })
   }
@@ -962,7 +967,7 @@ async function main(): Promise<void> {
   const applicationIconPath = development ? join(app.getAppPath(), 'resources', 'icon-windows.png')
     : join(process.resourcesPath, 'icon.png')
   app.setAboutPanelOptions({
-    applicationName: 'DeepSeek Harness',
+    applicationName: 'Noseek Harness',
     applicationVersion: app.getVersion(),
     // The release has no separate build number; omit Electron's bundle version.
     version: '',
@@ -1324,7 +1329,7 @@ async function main(): Promise<void> {
   const policyInput: unknown = app.isPackaged
     ? ('dshMandatoryUpdatePolicy' in manifest ? manifest.dshMandatoryUpdatePolicy : undefined)
     : developmentPolicy === undefined ? undefined : JSON.parse(developmentPolicy) as unknown
-  const policyConfig = resolveDesktopPolicyConfig(policyInput, !app.isPackaged)
+  const policyConfig = isNoseekBuild ? undefined : resolveDesktopPolicyConfig(policyInput, !app.isPackaged)
   if (policyConfig !== undefined) {
     if (policyConfig.authentication === 'feishu-test') {
       policyAuth = new DesktopPolicyTestAuth(policyConfig.origin, policyConfig.allowedAuthOrigins, locale,

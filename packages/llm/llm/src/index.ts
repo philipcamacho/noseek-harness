@@ -1015,7 +1015,14 @@ export class LlmRuntime extends TypertRemoteService {
 
   private registration(provider: string): AdapterRegistration {
     const registration = this.adapters.get(provider)
-    if (!registration) throw new LlmError(`no adapter registered for provider "${provider}"`, 'NO_ADAPTER')
+    if (!registration) {
+      const hint = provider === 'deepseek-official'
+        ? '; use the "deepseek" provider via llm-pi-ai instead'
+        : provider.trim() === ''
+          ? '; configure a model provider before starting a turn'
+          : ''
+      throw new LlmError(`no adapter registered for provider "${provider}"${hint}`, 'NO_ADAPTER')
+    }
     return registration
   }
 

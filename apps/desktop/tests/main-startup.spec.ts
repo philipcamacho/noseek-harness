@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os'
 import type { MenuItemConstructorOptions, MessageBoxOptions } from 'electron'
 import { DESKTOP_IPC, type DesktopUpdateState } from '../src/ipc.ts'
 import { MANDATORY_IPC } from '../src/mandatory-update-ipc.ts'
+import { PLATFORM_IPC } from '../src/platform-ipc.ts'
 import { DesktopHostFatalError, DesktopHostUncleanExitError } from '../src/host-process.ts'
 import { en, zh } from '../src/locale.ts'
 import { DesktopUpdatePreparationError } from '../src/update-error.ts'
@@ -54,6 +55,9 @@ const harness = await vi.hoisted(async () => {
   let embeddedPolicy: unknown
   let closeWindowsOnQuit = false
   let updateState: DesktopUpdateState = { phase: 'idle' }
+  let appId: string | undefined = 'com.deepseek.dsh'
+  const platformSetSession = vi.fn()
+  const platformOpen = vi.fn(async () => {})
   let platformDisposeDeferred: ReturnType<typeof deferred> | undefined
   // The native Platform view owns persistent browser storage; Desktop startup tests replace it so
   // each quit can control when that cleanup settles.
@@ -164,6 +168,7 @@ const harness = await vi.hoisted(async () => {
       readonly inspectPort?: number, readonly environment?: NodeJS.ProcessEnv, readonly onFailure?: (error: Error) => void,
       readonly primaryRuntime?: string,
       readonly packageManager?: { pnpm: string; nodeBin: string },
+      readonly onAccountSession?: (session: unknown) => void,
     ) { hosts.push(this) }
   }
   const app = Object.assign(new EventEmitter(), {
@@ -212,6 +217,10 @@ const harness = await vi.hoisted(async () => {
     menu, popup, socketHeaders: vi.fn(), loginShell, readLoginShell, updateCheck, updateDownload, updateInstall,
     platformDispose,
     platformCloseAndWait,
+    platformSetSession,
+    platformOpen,
+    get appId() { return appId },
+    set appId(value: string | undefined) { appId = value },
 
     get analyticsEnabled() { return analyticsEnabled },
     set analyticsEnabled(value: boolean) { analyticsEnabled = value; analyticsEnabledListener?.(value) },
@@ -264,6 +273,9 @@ const harness = await vi.hoisted(async () => {
       windowFailure = undefined
       pluginsEnabled = false
       closeWindowsOnQuit = false
+      appId = 'com.deepseek.dsh'
+      platformSetSession.mockReset()
+      platformOpen.mockReset()
       prepareUpdate = undefined
       publishUpdate = undefined
       updateState = { phase: 'idle' }
@@ -284,9 +296,16 @@ const harness = await vi.hoisted(async () => {
   }
 })
 
-const testAuth = vi.hoisted(() => ({ login: vi.fn<() => Promise<'returned' | 'cancelled' | 'failed'>>(),
-  focus: vi.fn(), dispose: vi.fn(async () => {}) }))
+const testAuth = vi.hoisted(() => ({
+  constructed: vi.fn(),
+  login: vi.fn<() => Promise<'returned' | 'cancelled' | 'failed'>>(),
+  focus: vi.fn(),
+  dispose: vi.fn(async () => {}),
+}))
 vi.mock('../src/policy-test-auth.ts', () => ({ DesktopPolicyTestAuth: class {
+  constructor(...args: unknown[]) {
+    testAuth.constructed(...args)
+  }
   readonly login = testAuth.login
   readonly focus = testAuth.focus
   readonly dispose = testAuth.dispose
@@ -327,7 +346,9 @@ vi.mock('node:fs/promises', async (importOriginal) => {
   const original = await importOriginal<typeof import('node:fs/promises')>()
   return { ...original, readFile: vi.fn((path: Parameters<typeof original.readFile>[0], encoding?: 'utf8') => {
     if (path === join('desktop-test-app', 'package.json')) {
-      return Promise.resolve(JSON.stringify({ dshDesktopAppId: 'com.deepseek.dsh', dshMandatoryUpdatePolicy: harness.embeddedPolicy }))
+      const manifest: Record<string, unknown> = { dshMandatoryUpdatePolicy: harness.embeddedPolicy }
+      if (harness.appId !== undefined) manifest.dshDesktopAppId = harness.appId
+      return Promise.resolve(JSON.stringify(manifest))
     }
     return encoding === undefined ? original.readFile(path) : original.readFile(path, encoding)
   }) }
@@ -374,8 +395,9 @@ vi.mock('../src/platform-view.ts', async importOriginal => ({
   ...await importOriginal<typeof import('../src/platform-view.ts')>(),
   DesktopPlatformView: class {
     notifyLocaleChanged() {}
-    setSession() {}
+    setSession = harness.platformSetSession
     setBounds() {}
+    open = harness.platformOpen
     close() {}
     closeAndWait(): Promise<void> { return harness.platformCloseAndWait() }
     dispose(): Promise<void> { return harness.platformDispose() }
@@ -421,6 +443,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   harness.dialog.showMessageBox.mockReset()
   harness.dialog.showMessageBox.mockResolvedValue({ response: 1 })
+  testAuth.constructed.mockReset()
   testAuth.login.mockReset()
   testAuth.login.mockResolvedValue('cancelled')
   vi.useFakeTimers()
@@ -579,7 +602,7 @@ describe('desktop main startup', () => {
     await vi.advanceTimersByTimeAsync(0)
     const zh = locale === 'zh-CN'
     expect(harness.dialog.showMessageBox).toHaveBeenLastCalledWith(expect.objectContaining({
-      type: 'info', title: zh ? '关于 DeepSeek Harness' : 'About DeepSeek Harness', message: 'DeepSeek Harness',
+      type: 'info', title: zh ? '关于 Noseek Harness' : 'About Noseek Harness', message: 'Noseek Harness',
       detail: zh ? '版本 V1.0.0' : 'Version V1.0.0', buttons: [zh ? '确定' : 'OK'], cancelId: 0,
     }))
     // A dialog that cannot open is logged, not surfaced as an unhandled rejection.
@@ -997,7 +1020,7 @@ describe('desktop main startup', () => {
     expect(() => handler(event, 'application', NaN, 34)).toThrow('invalid popup request')
     const application = handler(event, 'application', 48, 34)
     expect(harness.menu.buildFromTemplate.mock.lastCall![0].map(item => item.label ?? item.type)).toEqual([
-      '关于 DeepSeek Harness', 'separator', '检查更新…', '管理 dsh 命令…', 'separator', '退出',
+      '关于 Noseek Harness', 'separator', '检查更新…', '管理 dsh 命令…', 'separator', '退出',
     ])
     expect(harness.popup.mock.lastCall![0]).toMatchObject({ window, x: 48, y: 34 })
     expect(harness.popup.mock.lastCall![0].callback).toBeTypeOf('function')
@@ -2488,6 +2511,55 @@ describe('desktop main startup', () => {
     expect(host.stop).toHaveBeenCalledTimes(1)
     expect(window.urls).toEqual(['dsh-app://app/'])
     expect(harness.windows).toHaveLength(1)
+  })
+
+  describe('Noseek desktop runtime isolation', () => {
+    it('isolates the desktop runtime from update checks, policy origins, and platform views', async () => {
+      harness.appId = 'com.noseek.harness'
+      harness.embeddedPolicy = {
+        origin: 'https://policy.example.com',
+        authentication: 'feishu-test',
+        allowedAuthOrigins: ['https://login.example.com'],
+        allowedPageOrigins: ['https://downloads.example.com'],
+        intervalMs: 10_000,
+        jitter: 0,
+      }
+      const fetchMock = vi.fn(async () => Response.json({ code: 0, data: { biz_code: 0, biz_data: null } }))
+      vi.stubGlobal('fetch', fetchMock)
+
+      await import('../src/main.ts')
+      await harness.preparing.promise
+      harness.prepared.resolve()
+      await harness.hostStarted.promise
+      const host = harness.hosts[0]!
+      host.ready.resolve()
+      await harness.navigated.promise
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(testAuth.constructed).not.toHaveBeenCalled()
+      expect(harness.updateCheck).not.toHaveBeenCalled()
+      expect(fetchMock).not.toHaveBeenCalled()
+
+      host.onAccountSession?.({
+        origin: 'https://platform.deepseek.com',
+        token: 'test-token',
+        userId: 'test-user',
+      })
+      expect(harness.platformSetSession).toHaveBeenCalledWith(null)
+
+      await expect(
+        Promise.resolve().then(() => invoke(PLATFORM_IPC.open, 'app', 'usage', { x: 0, y: 0, width: 400, height: 300 })),
+      ).rejects.toThrow('Rejected Platform command')
+      expect(harness.platformOpen).not.toHaveBeenCalled()
+
+      const initialAnalyticsCount = harness.analytics.mock.calls.length
+      const deviceInfo = invoke(DESKTOP_IPC.deviceInfo, 'app')
+      expect(typeof deviceInfo).toBe('string')
+      expect(deviceInfo).toContain(`platform=${process.platform}`)
+      expect(deviceInfo).toContain(`app_arch=${process.arch}`)
+      expect(fetchMock).not.toHaveBeenCalled()
+      expect(harness.analytics.mock.calls.length).toBe(initialAnalyticsCount)
+    })
   })
 })
 

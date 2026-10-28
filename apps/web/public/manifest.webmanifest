@@ -1,6 +1,6 @@
 {
-  "name": "DeepSeek Harness",
-  "short_name": "DSH",
+  "name": "Noseek Harness",
+  "short_name": "Noseek",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -25,17 +25,17 @@ afterEach(() => {
 
 describe('dsh path helpers', () => {
   it('owns the shared default DSH home directory name', () => {
-    expect(DSH_HOME_DIR_NAME).toBe('.dsh')
-    expect(DEFAULT_DSH_HOME_DISPLAY).toBe('~/.dsh')
-    expect(defaultDshHome()).toBe(join(homedir(), '.dsh'))
+    expect(DSH_HOME_DIR_NAME).toBe('.noseek')
+    expect(DEFAULT_DSH_HOME_DISPLAY).toBe('~/.noseek')
+    expect(defaultDshHome()).toBe(join(homedir(), '.noseek'))
   })
 
   it('expands tilde paths without changing non-tilde paths', () => {
     expect(expandHomePath('~')).toBe(homedir())
-    expect(expandHomePath('~/.dsh')).toBe(join(homedir(), '.dsh'))
-    expect(expandHomePath('~\\.dsh')).toBe(join(homedir(), '.dsh'))
-    expect(expandHomePath('/tmp/.dsh')).toBe('/tmp/.dsh')
-    expect(expandHomePath('~other/.dsh')).toBe('~other/.dsh')
+    expect(expandHomePath('~/.noseek')).toBe(join(homedir(), '.noseek'))
+    expect(expandHomePath('~\\.noseek')).toBe(join(homedir(), '.noseek'))
+    expect(expandHomePath('/tmp/.noseek')).toBe('/tmp/.noseek')
+    expect(expandHomePath('~other/.noseek')).toBe('~other/.noseek')
   })
 
   it('resolves explicit path before DSH_HOME and the default', () => {
@@ -58,7 +58,7 @@ describe('dsh path helpers', () => {
   })
 
   it('labels a resolved home by whether it is the default root', () => {
-    expect(dshHomeDisplay(resolve(defaultDshHome()))).toBe('~/.dsh')
+    expect(dshHomeDisplay(resolve(defaultDshHome()))).toBe('~/.noseek')
     expect(dshHomeDisplay('/some/other/root')).toBe('$DSH_HOME')
   })
 
@@ -87,9 +87,9 @@ describe('dsh path helpers', () => {
   })
 
   it.each([
-    [undefined, join(homedir(), '.dsh')],
-    ['', join(homedir(), '.dsh')],
-    ['   ', join(homedir(), '.dsh')],
+    [undefined, join(homedir(), '.noseek')],
+    ['', join(homedir(), '.noseek')],
+    ['   ', join(homedir(), '.noseek')],
     ['~/env-dsh', join(homedir(), 'env-dsh')],
     ['./relative-dsh', resolve('./relative-dsh')],
   ] as const)('resolves cache paths with DSH_HOME=%j', (home, expectedHome) => {

@@ -1,4 +1,4 @@
-import { es, fr, de, ru, pt } from '../src/client/locales.ts'
+import { es, fr, de, ru, pt, zh } from '../src/client/locales.ts'
 // @vitest-environment jsdom
 /** Section, setup-card, and hand-written editor behavior over a scripted wire face. */
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
@@ -2436,4 +2436,159 @@ it.each([es, fr, de, ru, pt])('keeps capacity examples in translated validation 
       expect(parseCapacity(token!)).toBeGreaterThan(0)
     }
   }
+})
+
+it('renders noProviderConfiguredNotice when no provider is configured', async () => {
+  const scripted = scriptedFace({})
+  const namespaces: SettingsNamespaceView[] = [
+    {
+      ns: 'llm-pi-ai',
+      schema: JSON.parse(JSON.stringify(PiAiConfig.toJSON())) as JsonValue,
+      value: { providers: {} },
+      user: { providers: {} },
+      autoGenerate: true, applies: 'live',
+      secrets: [],
+      revision: 0,
+    },
+  ]
+  scripted.face.settings.describe.mockResolvedValue(remoteOk({ writable: true, hasDocument: false, namespaces }))
+  scripted.face.llm.listConfigurableProviders.mockResolvedValue(remoteOk([
+    {
+      provider: 'openai', displayName: 'openai', settingsNs: 'llm-pi-ai', settingsPath: ['providers', 'openai'], active: false,
+      defaultBaseURL: 'https://api.openai.com/v1', baseURLEnv: [], nativeAuth: { env: ['OPENAI_API_KEY'], oauth: false },
+    },
+  ]))
+  await mountFace(scripted)
+  expect(screen.getByText(en.noProviderConfiguredNotice)).toBeTruthy()
+})
+
+it('renders chinaProviderNotice in ProviderEditor for deepseek in English and Chinese', () => {
+  const namespace = wireNamespaces().find(view => view.ns === 'llm-pi-ai')!
+
+  const enView = render(
+    <ProviderEditor
+      provider="deepseek"
+      displayName="DeepSeek"
+      namespace={namespace}
+      settingsPath={['providers', 'deepseek']}
+      schema={settingsSchema}
+      operations={operationsWith(scriptedFace().face)}
+      t={key => en[key]}
+      readOnly={false}
+      onClose={vi.fn()}
+    />,
+  )
+  expect(screen.getByText(en.chinaProviderNotice)).toBeTruthy()
+  enView.unmount()
+
+  const zhView = render(
+    <ProviderEditor
+      provider="deepseek"
+      displayName="DeepSeek"
+      namespace={namespace}
+      settingsPath={['providers', 'deepseek']}
+      schema={settingsSchema}
+      operations={operationsWith(scriptedFace().face)}
+      t={key => zh[key]}
+      readOnly={false}
+      onClose={vi.fn()}
+    />,
+  )
+  expect(screen.getByText(zh.chinaProviderNotice)).toBeTruthy()
+  zhView.unmount()
+})
+
+it('does not render chinaProviderNotice for openai or anthropic in ProviderEditor', () => {
+  const namespace = wireNamespaces().find(view => view.ns === 'llm-pi-ai')!
+  const view1 = render(
+    <ProviderEditor
+      provider="openai"
+      displayName="OpenAI"
+      namespace={namespace}
+      settingsPath={['providers', 'openai']}
+      schema={settingsSchema}
+      operations={operationsWith(scriptedFace().face)}
+      t={t}
+      readOnly={false}
+      defaultBaseURL="https://api.openai.com/v1"
+      onClose={vi.fn()}
+    />,
+  )
+  expect(screen.queryByText(en.chinaProviderNotice)).toBeNull()
+  view1.unmount()
+
+  const view2 = render(
+    <ProviderEditor
+      provider="anthropic"
+      displayName="Anthropic"
+      namespace={namespace}
+      settingsPath={['providers', 'anthropic']}
+      schema={settingsSchema}
+      operations={operationsWith(scriptedFace().face)}
+      t={t}
+      readOnly={false}
+      defaultBaseURL="https://api.anthropic.com"
+      onClose={vi.fn()}
+    />,
+  )
+  expect(screen.queryByText(en.chinaProviderNotice)).toBeNull()
+  view2.unmount()
+})
+
+it('renders chinaProviderNotice when selecting deepseek in Add Provider catalog picker and hides for anthropic', async () => {
+  const scripted = scriptedFace()
+  scripted.face.llm.listConfigurableProviders.mockResolvedValue(remoteOk([
+    {
+      provider: 'openai', displayName: 'openai', settingsNs: 'llm-pi-ai', settingsPath: ['providers', 'openai'], active: true,
+      defaultBaseURL: 'https://api.openai.com/v1', baseURLEnv: [], nativeAuth: { env: ['OPENAI_API_KEY'], oauth: false },
+    },
+    {
+      provider: 'deepseek', displayName: 'DeepSeek', settingsNs: 'llm-pi-ai', settingsPath: ['providers', 'deepseek'], active: false,
+      defaultBaseURL: 'https://api.deepseek.com', baseURLEnv: [], nativeAuth: { env: ['DEEPSEEK_API_KEY'], oauth: false },
+    },
+    {
+      provider: 'anthropic', displayName: 'anthropic', settingsNs: 'llm-pi-ai', settingsPath: ['providers', 'anthropic'], active: false,
+      defaultBaseURL: 'https://api.anthropic.com', baseURLEnv: [], nativeAuth: { env: ['ANTHROPIC_API_KEY'], oauth: false },
+    },
+  ]))
+
+  const enMount = await mountFace(scripted)
+  fireEvent.click(screen.getByRole('button', { name: en.add }))
+  const combobox = screen.getByRole('combobox', { name: en.provider })
+  fireEvent.change(combobox, { target: { value: 'deepseek' } })
+  expect(screen.getByText(en.chinaProviderNotice)).toBeTruthy()
+
+  fireEvent.change(combobox, { target: { value: 'anthropic' } })
+  expect(screen.queryByText(en.chinaProviderNotice)).toBeNull()
+  enMount.view.unmount()
+
+  const zhScripted = scriptedFace()
+  zhScripted.face.llm.listConfigurableProviders.mockResolvedValue(remoteOk([
+    {
+      provider: 'openai', displayName: 'openai', settingsNs: 'llm-pi-ai', settingsPath: ['providers', 'openai'], active: true,
+      defaultBaseURL: 'https://api.openai.com/v1', baseURLEnv: [], nativeAuth: { env: ['OPENAI_API_KEY'], oauth: false },
+    },
+    {
+      provider: 'deepseek', displayName: 'DeepSeek', settingsNs: 'llm-pi-ai', settingsPath: ['providers', 'deepseek'], active: false,
+      defaultBaseURL: 'https://api.deepseek.com', baseURLEnv: [], nativeAuth: { env: ['DEEPSEEK_API_KEY'], oauth: false },
+    },
+  ]))
+  const ctx = ctxWith(zhScripted.face)
+  const mirror = new SettingsDescribeMirror(ctx)
+  const controller = new ModelsSettingsStore(ctx, settingsSchema, mirror)
+  await controller.load()
+  const renderSlot = stubRenderSlot()
+  const zhMount = render(<ModelsSection
+    controller={controller}
+    useSnapshot={bindSnapshotSelector(controller.store)}
+    operations={operationsWith(zhScripted.face)}
+    schema={settingsSchema}
+    t={key => zh[key]}
+    renderSlot={renderSlot as unknown as ModelsSectionProps['renderSlot']}
+  />)
+  fireEvent.click(screen.getByRole('button', { name: zh.add }))
+  const zhCombobox = screen.getByRole('combobox', { name: zh.provider })
+  fireEvent.change(zhCombobox, { target: { value: 'deepseek' } })
+  expect(screen.getByText(zh.chinaProviderNotice)).toBeTruthy()
+  zhMount.unmount()
 })

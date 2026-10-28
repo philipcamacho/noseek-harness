@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.1-rc.3/noseek-home-and-provider-routes/guide.md
+/:
+  en: 2b5696620d811f99
+  zh: bc53f9ea4812b64a
+/default-home-directory-is-noseek-and-deepseek-official-routes-are-replaced:
+  en: 13e46e038bdeef2c
+  zh: 6ed27196f86720ad
+/default-home-directory-is-noseek-and-deepseek-official-routes-are-replaced/change:
+  en: 83b9e478a4960b29
+  zh: 8ef47b4b24664887
+/default-home-directory-is-noseek-and-deepseek-official-routes-are-replaced/migration:
+  en: 97d1f39b71de5fca
+  zh: e9efcf7db95550c1

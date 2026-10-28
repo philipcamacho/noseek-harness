@@ -309,6 +309,29 @@ describe('SidebarRoot shell', () => {
     expect(screen.getByText('DSH Local Build')).toBeTruthy()
   })
 
+  it('renders a neutral non-fish fallback mark without FISH_LOGO_PATH or 23.16 viewBox', () => {
+    const { container } = render(<SidebarRoot
+      collapsed={false} width={300}
+      useSessions={neverHook} useSessionStatus={useSessionStatus} useSessionRetainInfo={neverHook}
+      usePanelInfo={usePanelInfo} selectPanel={() => {}} usePanels={selector => selector([])} useEntryPins={selector => selector([])}
+      useEntryActions={selector => selector(false)} setPinned={vi.fn()}
+      useShortcuts={selector => selector([])}
+      useResource={useResource} useWorkspaces={neverHook}
+      {...allowAllAccess}
+      startSession={vi.fn()} toggleSidebar={vi.fn()} trackEntryClick={vi.fn()} t={t}
+      renderSlot={((_key: string, _owner: unknown, options?: { fallback?: ReactNode }) =>
+        options?.fallback ?? null) as SidebarRootComponentProps['renderSlot']}
+    />)
+
+    const svg = container.querySelector('svg')
+    expect(svg).toBeTruthy()
+    expect(svg?.getAttribute('viewBox')).not.toContain('23.16')
+    const path = svg?.querySelector('path')
+    expect(path).toBeTruthy()
+    const d = path?.getAttribute('d') ?? ''
+    expect(d).not.toContain('M22.9168')
+  })
+
   it('hands the region its wide flag and clamps expandSidebar to the collapsed state', () => {
     const b = mountShell()
     expect(b.regionOwner().wide).toBe(true)

@@ -22,6 +22,49 @@ import type { SettingsSchemaOperations } from './schema-operations.ts'
  */
 const PROBE_ROUTE = '\u0000probe'
 
+/** Known provider IDs for models hosted in mainland China or operated by Chinese companies. */
+const CHINA_HOSTED_PROVIDER_IDS = new Set([
+  'deepseek',
+  'qwen-token-plan-cn',
+  'zai-coding-cn',
+  'moonshotai-cn',
+  'minimax-cn',
+  'xiaomi',
+  'xiaomi-token-plan-cn',
+  'ant-ling',
+])
+
+/** Hostnames and domain suffixes for endpoints operated in mainland China or by Chinese companies. */
+const CHINA_HOSTED_DOMAINS = [
+  'api.deepseek.com',
+  'aliyuncs.com',
+  'bigmodel.cn',
+  'minimaxi.com',
+  'xiaomimimo.com',
+  'ant-ling.com',
+]
+
+/**
+ * Whether a provider route or endpoint URL is hosted in mainland China or operated by a Chinese company.
+ * @param provider - provider route identifier (e.g. `deepseek`, `anthropic`).
+ * @param defaultBaseURL - optional base URL to check for China-hosted domains or endpoints.
+ * @returns whether the provider or its endpoint is China-hosted.
+ */
+export function isChinaHostedProvider(provider: string, defaultBaseURL?: string): boolean {
+  if (CHINA_HOSTED_PROVIDER_IDS.has(provider)) return true
+  if (defaultBaseURL !== undefined && defaultBaseURL.trim().length > 0) {
+    try {
+      const candidate = defaultBaseURL.includes('://') ? defaultBaseURL.trim() : `https://${defaultBaseURL.trim()}`
+      const hostname = new URL(candidate).hostname.toLowerCase()
+      if (hostname === 'cn' || hostname.endsWith('.cn')) return true
+      if (CHINA_HOSTED_DOMAINS.some(domain => hostname === domain || hostname.endsWith(`.${domain}`))) return true
+    } catch {
+      return false
+    }
+  }
+  return false
+}
+
 /** One provider row after joining the configurable directory with live routes. */
 export interface ProviderDirectoryEntry {
   readonly provider: string

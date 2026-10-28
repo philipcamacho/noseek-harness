@@ -1,0 +1,109 @@
+name: Noseek Upstream Sync
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Specific upstream dsh-v* tag to sync (defaults to latest dsh-v* tag)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    if: github.repository != 'deepseek-ai/deepseek-harness'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Fetch upstream release tags and determine target
+        id: determine-target
+        run: |
+          git remote remove upstream 2>/dev/null || true
+          git remote add upstream https://github.com/deepseek-ai/deepseek-harness.git
+          git fetch upstream --tags --prune
+
+          INPUT_TAG="${{ inputs.tag }}"
+          if [ -n "$INPUT_TAG" ]; then
+            TARGET_TAG="$INPUT_TAG"
+          else
+            TARGET_TAG="$(git tag --list 'dsh-v*' --sort=v:refname | tail -n 1)"
+          fi
+
+          if [ -z "$TARGET_TAG" ]; then
+            echo "Error: No upstream dsh-v* tag found!" >&2
+            exit 1
+          fi
+
+          echo "Target tag: $TARGET_TAG"
+          echo "target_tag=$TARGET_TAG" >> "$GITHUB_OUTPUT"
+
+          if git merge-base --is-ancestor "$TARGET_TAG" HEAD; then
+            echo "Target tag $TARGET_TAG is already an ancestor of HEAD (already merged)."
+            echo "already_merged=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_merged=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create sync branch and merge upstream tag
+        if: steps.determine-target.outputs.already_merged != 'true'
+        run: |
+          TARGET_TAG="${{ steps.determine-target.outputs.target_tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "sync/${TARGET_TAG}"
+          git merge --no-edit "$TARGET_TAG"
+
+      - name: Run verification gates
+        if: steps.determine-target.outputs.already_merged != 'true'
+        run: |
+          TARGET_TAG="${{ steps.determine-target.outputs.target_tag }}"
+          bash noseek/check-delta.sh "$TARGET_TAG"
+          pnpm install --frozen-lockfile
+          pnpm run build
+          pnpm run audit:privacy
+          pnpm run test:hermetic
+
+      - name: Push sync branch and open Pull Request
+        if: steps.determine-target.outputs.already_merged != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TARGET_TAG="${{ steps.determine-target.outputs.target_tag }}"
+          BRANCH="sync/${TARGET_TAG}"
+          git push -u origin "$BRANCH"
+
+          if gh pr view "$BRANCH" --json url >/dev/null 2>&1; then
+            echo "Pull request for $BRANCH already exists."
+          else
+            gh pr create \
+              --base master \
+              --head "$BRANCH" \
+              --title "sync(upstream): merge $TARGET_TAG" \
+              --body "Automated upstream synchronization with release tag \`$TARGET_TAG\`.
+
+          ### Verification Gates
+          - \`bash noseek/check-delta.sh $TARGET_TAG\` passed
+          - \`pnpm run audit:privacy\` passed
+          - \`pnpm run test:hermetic\` passed
+
+          Please review the diff and ensure all fork invariants hold before merging into \`master\`."
+          fi

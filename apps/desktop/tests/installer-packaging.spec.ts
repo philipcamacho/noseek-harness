@@ -124,4 +124,20 @@ describe('installer preparation preserves application dependencies', () => {
     const packaged = new Set(config.files.filter((entry): entry is string => typeof entry === 'string'))
     for (const name of referenced) expect(packaged.has(`lib/${name}`)).toBe(true)
   })
+  it('configures isolated Noseek packaging without update origins, policy origins, or upload scripts', async () => {
+    const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
+    const config = createElectronBuilderConfig({
+      DSH_DESKTOP_APP_ID: 'com.noseek.harness',
+      DSH_DESKTOP_UNSIGNED: '1',
+    }, 'darwin', 'arm64')
+
+    expect(config.appId).toBe('com.noseek.harness')
+    expect((config as { readonly productName?: string }).productName).toBe('Noseek Harness')
+    expect(config.publish).toBeNull()
+    expect(config.extraMetadata).not.toHaveProperty('dshMandatoryUpdatePolicy')
+
+    const packagedFiles = config.files.filter((entry): entry is string => typeof entry === 'string')
+    expect(packagedFiles.some(entry => entry.startsWith('scripts/'))).toBe(false)
+    expect(config.files.some(entry => typeof entry === 'object' && 'to' in entry && (entry as { readonly to: string }).to.startsWith('scripts'))).toBe(false)
+  })
 })

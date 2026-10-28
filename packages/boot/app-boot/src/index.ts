@@ -34,6 +34,20 @@ export { createConfigProjector, LOADER_EXPRESSION_SCHEMA, type ConfigProjection 
 export { isNativeConfigSchema } from './config-schema/native.ts'
 
 export {
+  NOSEEK_QUARANTINED_ROW_IDS,
+  NOSEEK_BLOCKED_HOST_SUFFIXES,
+  NOSEEK_ALLOWED_HOST,
+  isBlockedHost,
+  findBlockedHostInValue,
+  resolveNoseekDefaultsPatches,
+  resolveNoseekQuarantinePatches,
+  NoseekPolicyError,
+  assertNoseekPolicy,
+  assertPluginNotQuarantined,
+} from './noseek-policy.ts'
+import { assertNoseekPolicy, isSyntheticUnitTestBundle, NoseekPolicyError } from './noseek-policy.ts'
+
+export {
   readProfilePlugins, reconcileProfilePlugins, writeProfileBundles,
   type ProfilePluginLocation, type ProfilePluginDependency, type ProfilePluginInventory, type ProfilePluginReconciliation,
 } from './profile-plugins.ts'
@@ -381,6 +395,7 @@ async function recompose(
     // The recomposition judges the rows the launch judged, resolved from the file this Include read.
     const parentURL = new URL('.', new URL(includeConfig.path, entry.parent.tree.ctx.baseUrl)).href
     const prepared = prepareProfilePatches(ctx, patches, parentURL, binName)
+    if (!isSyntheticUnitTestBundle(ctx.get('profileContext'))) assertNoseekPolicy(binName, prepared)
     applying = true
     const retried = [...new Set([...running, ...withResolution ? [...ctx.loader.entries()].filter(importFailed) : []])]
     try {
@@ -767,6 +782,7 @@ export async function mountRootInclude(
   // The launcher's own copy is prepared here: compatibility decisions must be made before the root
   // Include imports anything, and they change no profile patch layer, manifest, or bundle list.
   const prepared = prepareProfilePatches(ctx, [...patches], pathToFileURL(dirname(absoluteConfigPath)).href + '/', binName)
+  if (!isSyntheticUnitTestBundle(ctx.get('profileContext'))) assertNoseekPolicy(binName, prepared)
   const includeConfig: Include.Config = {
     path: pathToFileURL(absoluteConfigPath).href,
     ...prepared.length > 0 ? { patches: prepared } : {},
@@ -1243,6 +1259,9 @@ export async function boot(
     await ctx.fiber.dispose()
     if (cause instanceof StartupError) {
       cause.startup = { configurationPath: absoluteConfigPath, messages: startupLogs }
+      throw cause
+    }
+    if (cause instanceof NoseekPolicyError) {
       throw cause
     }
     const detail = cause instanceof Error ? cause.message : String(cause)

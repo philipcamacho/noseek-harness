@@ -4,7 +4,7 @@ import type { RpcResponse } from '@deepseek-ai/dsh-api-remotes/client'
 import { RemoteError } from '@deepseek-ai/dsh-client-test-runtime'
 import { SettingsDescribeMirror } from '@deepseek-ai/dsh-client-ui-settings/src/client/settings-mirror.ts'
 import { settingsSchema } from './settings-schema.client.ts'
-import { deriveKeyRef, joinProviderDirectory, ModelsSettingsStore, providerUsable } from '../src/client/store.ts'
+import { deriveKeyRef, isChinaHostedProvider, joinProviderDirectory, ModelsSettingsStore, providerUsable } from '../src/client/store.ts'
 
 it.each([
   ['anthropic', 'ANTHROPIC_API_KEY'],
@@ -45,6 +45,52 @@ it('places account and official before third-party providers', () => {
   expect(joinProviderDirectory([], directory).map(row => row.provider))
     .toEqual(['deepseek-account', 'deepseek-official', 'custom', 'openai'])
   expect(directory.map(row => row.provider)).toEqual(providers)
+})
+
+it('lists deepseek in standard catalog order without pinning it above anthropic or openai', () => {
+  const providers = ['openai', 'deepseek', 'anthropic']
+  const directory = providers.map(provider => ({
+    provider, displayName: provider, settingsNs: 'fixture', settingsPath: [],
+  }))
+  expect(joinProviderDirectory([], directory).map(row => row.provider))
+    .toEqual(['openai', 'deepseek', 'anthropic'])
+})
+
+it.each([
+  ['deepseek', true],
+  ['qwen-token-plan-cn', true],
+  ['zai-coding-cn', true],
+  ['moonshotai-cn', true],
+  ['minimax-cn', true],
+  ['xiaomi', true],
+  ['xiaomi-token-plan-cn', true],
+  ['ant-ling', true],
+  ['openai', false],
+  ['anthropic', false],
+  ['openrouter', false],
+  ['google', false],
+])('isChinaHostedProvider identifies catalog provider IDs: %s -> %s', (provider, expected) => {
+  expect(isChinaHostedProvider(provider)).toBe(expected)
+})
+
+it.each([
+  ['custom', 'https://api.deepseek.com/v1', true],
+  ['custom', 'api.deepseek.com', true],
+  ['custom', 'https://dashscope.aliyuncs.com/compatible-mode/v1', true],
+  ['custom', 'https://open.bigmodel.cn/api/paas/v4', true],
+  ['custom', 'https://api.moonshot.cn/v1', true],
+  ['custom', 'https://api.minimaxi.com/v1', true],
+  ['custom', 'https://token-plan-cn.xiaomimimo.com', true],
+  ['custom', 'https://ant-ling.com/api', true],
+  ['custom', 'https://example.cn', true],
+  ['custom', 'https://foo.bar.cn/api', true],
+  ['custom', 'https://api.openai.com/v1', false],
+  ['custom', 'https://api.anthropic.com', false],
+  ['custom', 'https://openrouter.ai/api/v1', false],
+  ['custom', 'https://notdeepseek.com', false],
+  ['custom', 'https://deepseek.com.example.org', false],
+])('isChinaHostedProvider identifies China-hosted base URLs: %s with %s -> %s', (provider, baseURL, expected) => {
+  expect(isChinaHostedProvider(provider, baseURL)).toBe(expected)
 })
 
 let nextRpc = 0

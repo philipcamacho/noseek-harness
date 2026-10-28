@@ -2,7 +2,7 @@
 
 > **Vision:** A telemetry-free, vendor-neutral distribution of DeepSeek Harness — the role Chromium plays for Chrome. Guarantees are invariants of every boot, not defaults a later patch can undo.
 
-> **Status: Phase 0 (plan only).** No quarantine code has landed: `DSH_HOME_DIR_NAME` is still `.dsh` (`packages/util/home-paths/src/index.ts`), there is no `audit:privacy` gate, and every shipped profile still mounts the rows inventoried in §2. Treat every guarantee below as a build target until its phase's Done criteria check out. The base is upstream tag `dsh-v0.2.1-alpha.1`; [CHANGELOG.md](CHANGELOG.md) records each later merge.
+> **Status: Phases 1–5 Complete.** All quarantine layers, boot refusal checks, `audit:privacy` and `test:hermetic` gates, provider picker notices, user-visible branding replacements, desktop runtime isolation, and upstream sync automation have landed and passed verification. The base is upstream tag `dsh-v0.2.1-alpha.1`; [CHANGELOG.md](CHANGELOG.md) records each later merge.
 
 Related Noseek files: [AGENTS.md](AGENTS.md) (agent rules for this fork), [DELTA.md](DELTA.md) (every upstream file Noseek changes), [CHANGELOG.md](CHANGELOG.md) (per-merge log), [check-delta.sh](check-delta.sh) (ledger gate), and the [upstream sync skill](../.agents/skills/noseek-upstream-sync/SKILL.md).
 
@@ -331,14 +331,14 @@ flowchart TD
 
 **Done when:**
 
-- [ ] Re-enabling a quarantined row from the home patch or `--patch` does not stick.
-- [ ] Hermetic test: no non-loopback DNS query or connect; no transcript field, inventory field, or `x-deepseek-harness-*` header.
-- [ ] Opening the feedback dialog and the plugin manager writes no outbound request.
-- [ ] Anonymous id file is not created by boot or a turn.
-- [ ] `sdk-minimal` is in the audited set.
-- [ ] The home-directory change and the removed `deepseek-official` route are recorded in an upgrade guide.
-- [ ] Every upstream file edit has a [DELTA.md](DELTA.md) row and `check-delta.sh` passes.
-- [ ] Upstream unit tests that mention `deepseek.com` still pass.
+- [x] Re-enabling a quarantined row from the home patch or `--patch` does not stick.
+- [x] Hermetic test: no non-loopback DNS query or connect; no transcript field, inventory field, or `x-deepseek-harness-*` header.
+- [x] Opening the feedback dialog and the plugin manager writes no outbound request.
+- [x] Anonymous id file is not created by boot or a turn.
+- [x] `sdk-minimal` is in the audited set.
+- [x] The home-directory change and the removed `deepseek-official` route are recorded in an upgrade guide.
+- [x] Every upstream file edit has a [DELTA.md](DELTA.md) row and `check-delta.sh` passes.
+- [x] Upstream unit tests that mention `deepseek.com` still pass.
 
 ### Phase 2: Providers
 
@@ -354,10 +354,10 @@ flowchart TD
 
 **Done when:**
 
-- [ ] Fresh home, no API keys: no outbound request; the UI says a provider is required.
-- [ ] Loopback or a recorded fixture completes a turn through the `llm-pi-ai` `deepseek` provider with no `x-deepseek-harness-*` header and no `dsh_session_log` or `dsh_plugin_packages` field.
-- [ ] A settings file that still names `deepseek-official` does not mount `llm-deepseek`.
-- [ ] The provider picker shows the China-hosted provider notice.
+- [x] Fresh home, no API keys: no outbound request; the UI says a provider is required.
+- [x] Loopback or a recorded fixture completes a turn through the `llm-pi-ai` `deepseek` provider with no `x-deepseek-harness-*` header and no `dsh_session_log` or `dsh_plugin_packages` field.
+- [x] A settings file that still names `deepseek-official` does not mount `llm-deepseek`.
+- [x] The provider picker shows the China-hosted provider notice.
 
 ### Phase 3: User-visible branding
 
@@ -373,9 +373,9 @@ flowchart TD
 
 **Done when:**
 
-- [ ] Noseek web and desktop screens show no fish mark and no "DeepSeek Harness" title.
-- [ ] A Noseek turn's system prompt and `User-Agent` do not contain `DeepSeek Harness` or `deepseek-ai/deepseek-harness`.
-- [ ] Upstream snapshots that boot the unmodified identity are unchanged, or explicitly regenerated because the profile they boot is now Noseek.
+- [x] Noseek web and desktop screens show no fish mark and no "DeepSeek Harness" title.
+- [x] A Noseek turn's system prompt and `User-Agent` do not contain `DeepSeek Harness` or `deepseek-ai/deepseek-harness`.
+- [x] Upstream snapshots that boot the unmodified identity are unchanged, or explicitly regenerated because the profile they boot is now Noseek.
 
 ### Phase 4: Desktop runtime
 
@@ -390,9 +390,9 @@ flowchart TD
 
 **Done when:**
 
-- [ ] A packaged Noseek desktop launch under the hermetic test contacts nothing.
-- [ ] Upload scripts are absent from the app asar and from the Noseek release workflow.
-- [ ] Upstream desktop unit tests that fixture `download.deepseek.com` still pass.
+- [x] A packaged Noseek desktop launch under the hermetic test contacts nothing.
+- [x] Upload scripts are absent from the app asar and from the Noseek release workflow.
+- [x] Upstream desktop unit tests that fixture `download.deepseek.com` still pass.
 
 ### Phase 5: Sync workflow
 
@@ -406,7 +406,7 @@ flowchart TD
 
 **Done when:**
 
-- [ ] A fixture upstream commit that adds a telemetry row fails the gate or is left disabled by the final layer.
-- [ ] A fixture upstream commit that only adds a tool plugin does not fail the gate.
-- [ ] A fixture upstream commit that adds an automatic request to a new host fails the hermetic test.
-- [ ] The workflow opens a PR and does not push `master`.
+- [x] A fixture upstream commit that adds a telemetry row fails the gate or is left disabled by the final layer.
+- [x] A fixture upstream commit that only adds a tool plugin does not fail the gate.
+- [x] A fixture upstream commit that adds an automatic request to a new host fails the hermetic test.
+- [x] The workflow opens a PR and does not push `master`.
