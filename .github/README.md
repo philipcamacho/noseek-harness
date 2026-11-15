@@ -2,9 +2,12 @@
 
 A telemetry-free, vendor-neutral distribution of DeepSeek Harness — the role Chromium plays for Chrome.
 
+> [!WARNING]
+> **Status: On Hold until Upstream v1.0 Release.**
+>
 > **Project Goal:** Noseek Harness creates a privacy-conscious, vendor-neutral open-source distribution of the harness.
 >
-> **Status: Phase 0 (plan only).** The boot quarantine and defaults layers defined in the plan have not landed yet. Running `pnpm dsh web` currently boots upstream profiles with their default routes. See [**`noseek/WHITELABEL_PLAN.md`**](../noseek/WHITELABEL_PLAN.md) for the complete roadmap.
+> Phases 1–5 of the whitelabel and telemetry-elimination architecture have landed (boot quarantine, telemetry & China-egress elimination, neutral branding, `~/.noseek` home isolation, and automated privacy/hermetic gates). However, **active upstream syncs and development are on hold until the upstream `1.0` release** because upstream changes are still moving too rapidly prior to `1.0`. See [**`noseek/WHITELABEL_PLAN.md`**](../noseek/WHITELABEL_PLAN.md) for the complete architecture and roadmap.
 
 ---
 
@@ -51,7 +54,7 @@ Launch the Web UI on `http://127.0.0.1:3080`:
 pnpm dsh web
 ```
 
-> **Note:** During Phase 0 development, ensure you run with an isolated home directory (`DSH_HOME=/tmp/noseek-preview`) and `DSH_TELEMETRY_DISABLED=1` until Phase 1 boot quarantine lands.
+> **Note:** Noseek uses `~/.noseek` as its default home directory (override with `DSH_HOME`) with boot quarantine and telemetry opt-out enforced by default.
 
 For live development with hot-module reloading (HMR) for client plugins:
 
